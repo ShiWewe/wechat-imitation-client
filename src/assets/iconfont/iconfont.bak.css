@@ -1,0 +1,28 @@
+.iconfont {
+  font-family: "iconfont" !important;
+  font-size: 30px;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  cursor: pointer;
+  margin: 0 3px;
+}
+
+.icon-shezhi:before {
+  content: "\e624";
+}
+
+.icon-weixin:before {
+  content: "\e79f";
+}
+
+.icon-biaoqing:before {
+  content: "\e603";
+}
+
+.icon-wenjian:before {
+  font-size: 20px;
+  position: relative;
+  top: -4px;
+  content: "\e721";
+}

@@ -1,5 +1,13 @@
 <template>
   <div class="wechat-container">
+    <div class="box-setting-list">
+      <div class="setting-avatar">
+        <img :src="userInfo[0] && userInfo[0]['avatar']">
+      </div>
+      <div class="setting-shezhi">
+        <i title="设置" class="iconfont icon-shezhi" @click.stop="handleSetting"></i>
+      </div>
+    </div>
     <div class="box-user-list">
       <div class="box-user-item" v-for="(item, idx) in userList" :key="idx" :class="item.userId == userId ? 'actived': ''">
         <img :src="item.avatar">
@@ -48,6 +56,7 @@
         </div>
       </div>
     </div>
+    <setting :formData="setFormData"></setting>
   </div>
 </template>
 
@@ -56,6 +65,7 @@ import { deepClone, genId } from '@/libs/tools'
 import Vue from 'vue'
 import VueSocketio from 'vue-socket.io';
 import emjoy from '@/components/emjoy'
+import setting from '@/components/setting'
 
 Vue.use(new VueSocketio({
   debug: true,
@@ -64,7 +74,8 @@ Vue.use(new VueSocketio({
 
 export default {
   components: {
-    emjoy
+    emjoy,
+    setting
   },
   data () {
     return {
@@ -102,8 +113,13 @@ export default {
       imagesList: [],
       // 默认缩放大小
       cssZoom: 100,
-      // 缩放图片
-      zoomElem: null
+      // 缩放图片的dom
+      zoomElem: null,
+      // 设置功能模态框数据
+      setFormData: {
+        visible: false,
+        data: null
+      }
     }
   },
   created () {
@@ -220,12 +236,21 @@ export default {
         file.value = null
       };
     },
+    // 设置功能
+    handleSetting () {
+      this.setFormData.visible = true
+      this.setFormData.data = {
+        info: this.userInfo
+      }
+    },
+    // 表情包
     handleEmjoy () {
       this.isShowEmjoy = !this.isShowEmjoy
     },
     getEmojiData (e) {
       this.msgVal += e
     },
+    // 图片缩放
     handleClickImg (item) {
       this.cssZoom = 100
       let img = `<img style="width:100%;height:auto" src="${item.content}" alt="">`
@@ -236,6 +261,7 @@ export default {
         closeOnPressEscape: true,
         callback: () => {
           this.zoomElem.removeEventListener('mousewheel', this.handleZoomImg)
+          this.zoomElem = null
         }
       })
       this.zoomElem = document.querySelector('.el-message-box')
@@ -331,10 +357,32 @@ export default {
   border: 1px solid #efefef;
   border-radius: 5px;
 }
+.wechat-container > .box-setting-list {
+  position: relative;
+  width: 60px;
+  background: #27282c;
+  // border: 1px solid red;
+  .setting-avatar {
+    padding-top: 10px;
+    img {
+      display: block;
+      margin: 0 auto;
+      width: 40px;
+      height: 40px;
+      border-radius: 5px;
+      vertical-align: bottom;
+    }
+  }
+  .setting-shezhi {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+  }
+}
 .wechat-container > div.box-user-list {
   width: 250px;
   background: #eeebe8;
-  height: 800px;
   overflow: auto;
   &::-webkit-scrollbar {
     width: 10px;
@@ -352,10 +400,11 @@ export default {
   }
   .box-user-item {
     display: flex;
-    padding: 5px;
+    padding: 10px;
     img {
       width: 50px;
       height: 50px;
+      border-radius: 5px;
       vertical-align: bottom;
     }
   }
