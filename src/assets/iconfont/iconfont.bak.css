@@ -16,8 +16,16 @@
   content: "\e79f";
 }
 
+.icon-shoucang:before {
+  content: "\e6ae";
+}
+
 .icon-biaoqing:before {
   content: "\e603";
+}
+
+.icon-yonghu:before {
+  content: "\e607";
 }
 
 .icon-wenjian:before {

@@ -4,6 +4,9 @@
       <div class="setting-avatar">
         <img :src="userInfo[0] && userInfo[0]['avatar']">
       </div>
+      <div class="setting-icon-list">
+        <i v-for="(item, idx) in iconClassList" :key="idx" :class="['iconfont icon-' + item , {'iconActived' : idx == iconActived}]" @click.stop="handleIconClass(idx)"></i>
+      </div>
       <div class="setting-shezhi">
         <i title="设置" class="iconfont icon-shezhi" @click.stop="handleSetting"></i>
       </div>
@@ -79,6 +82,9 @@ export default {
   },
   data () {
     return {
+      // icon的class
+      iconClassList: ['weixin'],
+      iconActived: 0,
       // 最上层marginTop
       cha: 30,
       // 最低和最高top
@@ -236,6 +242,10 @@ export default {
         file.value = null
       };
     },
+    // 点击左侧icon
+    handleIconClass (idx) {
+      this.iconActived = idx
+    },
     // 设置功能
     handleSetting () {
       this.setFormData.visible = true
@@ -373,11 +383,28 @@ export default {
       vertical-align: bottom;
     }
   }
+  .setting-icon-list {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    i {
+      color: #fff;
+      margin: 8px 0;
+    }
+    i.iconActived {
+      color: #09bb07;
+    }
+  }
   .setting-shezhi {
     position: absolute;
     bottom: 10px;
     width: 100%;
     text-align: center;
+    i {
+      color: #fff;
+    }
   }
 }
 .wechat-container > div.box-user-list {
