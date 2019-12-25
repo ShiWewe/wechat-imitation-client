@@ -26,8 +26,7 @@
               <div class="wap">
                 <div class="main" v-if="item.type == 'txt'"> {{ item.content }}</div>
                 <div class="main" v-if="item.type == 'img'">
-                  <!-- @click.stop="handleClickImg(item)" -->
-                  <img :class="'diy-img-' + idx" :src="item.content">
+                  <img :class="'diy-img-' + idx" :src="item.content" @click.stop="handleClickImg(item)">
                 </div>
                 <div class="arrow"></div>
               </div>
@@ -49,7 +48,6 @@
         </div>
       </div>
     </div>
-    <imageSwipe ref="imageSwipeRef" v-show="false" :imagesList='imagesList'></imageSwipe>
   </div>
 </template>
 
@@ -58,20 +56,15 @@ import { deepClone, genId } from '@/libs/tools'
 import Vue from 'vue'
 import VueSocketio from 'vue-socket.io';
 import emjoy from '@/components/emjoy'
-import VueImageSwipe from 'vue-image-swipe'
-import 'vue-image-swipe/dist/vue-image-swipe.css'
-import imageSwipe from '@/components/imageSwipe'
 
 Vue.use(new VueSocketio({
   debug: true,
   connection: 'http://192.168.1.140:3000'
 }));
-Vue.use(VueImageSwipe)
 
 export default {
   components: {
-    emjoy,
-    imageSwipe
+    emjoy
   },
   data () {
     return {
@@ -106,13 +99,18 @@ export default {
       // 表情包
       isShowEmjoy: false,
       // 图片预览列表
-      imagesList: []
+      imagesList: [],
+      // 默认缩放大小
+      cssZoom: 100,
+      // 缩放图片
+      zoomElem: null
     }
   },
   created () {
     this.userId = genId()
   },
   mounted () {
+
     this.formatterBoxHeight()
 
     let idx = Math.floor(Math.random() * 2 + 1)
@@ -143,7 +141,6 @@ export default {
       let content;
       if (arr[idx] && arr[idx]['type'] == 'img') {
         content = '[图片]'
-        this.imagesList.push(arr[idx]['content'])
       } else if (arr[idx] && arr[idx]['type'] == 'txt') {
         content = arr[idx]['content']
       }
@@ -154,8 +151,11 @@ export default {
         }
       }
       this.msgVal = ''
-      this.scrollBottom()
-      this.scrollImg()
+      if (data.type == 'img') {
+        this.scrollImg()
+      } else {
+        this.scrollBottom()
+      }
     });
     // 收到服务器返回的该用户已经登陆的消息
     this.sockets.subscribe('mine-broadcast', (data) => {
@@ -186,7 +186,6 @@ export default {
           userId: this.userInfo[0]['userId'],
           avatar: this.userInfo[0]['avatar'],
           type: 'txt',
-          latestNew: content,
           content
         });
         this.isShowEmjoy && (this.isShowEmjoy = false)
@@ -215,7 +214,6 @@ export default {
           userId: this.userInfo[0]['userId'],
           avatar: this.userInfo[0]['avatar'],
           type: 'img',
-          latestNew: reads.result,
           content: reads.result
         });
         let file = document.querySelector('.file-upload')
@@ -229,11 +227,34 @@ export default {
       this.msgVal += e
     },
     handleClickImg (item) {
-      let idx = this.imagesList.findIndex(img => img == item.content)
-      if (idx > -1) {
-        this.$refs.imageSwipeRef.preview(idx)
-      }
+      this.cssZoom = 100
+      let img = `<img style="width:100%;height:auto" src="${item.content}" alt="">`
+      this.$alert(img, '', {
+        dangerouslyUseHTMLString: true,
+        showConfirmButton: false,
+        closeOnClickModal: true,
+        closeOnPressEscape: true,
+        callback: () => {
+          this.zoomElem.removeEventListener('mousewheel', this.handleZoomImg)
+        }
+      })
+      this.zoomElem = document.querySelector('.el-message-box')
+      this.zoomElem.style.zoom = this.cssZoom + '%'
+      this.zoomElem.addEventListener('mousewheel', this.handleZoomImg, false)
     },
+    handleZoomImg (e) {
+      let max = 200
+      let min = 50
+      let zoom = e.wheelDelta / 12
+      this.cssZoom += zoom
+      if (this.cssZoom >= max) {
+        this.cssZoom = max
+      } else if (this.cssZoom <= min) {
+        this.cssZoom = min
+      }
+      this.zoomElem.style.zoom = this.cssZoom + '%'
+    },
+    // 滚动到底部
     scrollBottom () {
       this.$nextTick(() => {
         let a = this.$refs.boxLeftRef.scrollHeight
@@ -241,6 +262,7 @@ export default {
         this.$refs.boxLeftRef.scrollTop = a - b;
       })
     },
+    // 图片加载完成，滚动到底部
     scrollImg () {
       this.$nextTick(() => {
         let len = this.wechatList.length - 1
@@ -287,6 +309,7 @@ export default {
         this.$refs.boxLeftRef.style.height = newTop + 'px'
         // 减去padding上下各10，分割线（否则点不到线）
         this.$refs.boxRightRef.style.height = boxContentHeight - this.cha - newTop - 1 - 20 + 'px'
+        this.scrollBottom()
       })
     },
   },

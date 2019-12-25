@@ -18,3 +18,4 @@ npm run build
 ### 插件
 -   Element UI
 -   vue-socket.io
+-   v-emoji-picker
