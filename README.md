@@ -1,6 +1,8 @@
 # wechat
 
 > 一个模仿pc端微信的聊天室
+-   客户端：wechat-imitation-client
+-   服务端：wechat-imitation-serve
 
 ## 安装
 
