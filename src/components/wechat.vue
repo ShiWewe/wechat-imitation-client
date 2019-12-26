@@ -50,7 +50,7 @@
         <div class="icon">
           <emjoy v-if="isShowEmjoy" class="icon-emjoy" @emojiData="getEmojiData"></emjoy>
           <i title="表情" class="iconfont icon-biaoqing" @click.stop="handleEmjoy"></i>
-          <i title="文件" class="iconfont icon-wenjian" @click.stop="handleUpload"></i>
+          <i title="图片" class="iconfont icon-tupian" @click.stop="handleUpload"></i>
           <input class="file-upload" type="file" accept="image/*" @change="handleFileChange" v-show="false">
         </div>
         <el-input ref="elInputRef" style="margin-bottom:10px;resize:none;" type="textarea" placeholder="请输入内容" v-model="msgVal" @keydown.native.enter="handleSend" @focus="handleFocus" resize="none"></el-input>
@@ -66,14 +66,8 @@
 <script>
 import { deepClone, genId } from '@/libs/tools'
 import Vue from 'vue'
-import VueSocketio from 'vue-socket.io';
 import emjoy from '@/components/emjoy'
 import setting from '@/components/setting'
-
-Vue.use(new VueSocketio({
-  debug: true,
-  connection: 'http://192.168.1.140:3000'
-}));
 
 export default {
   components: {
@@ -240,7 +234,7 @@ export default {
         });
         let file = document.querySelector('.file-upload')
         file.value = null
-      };
+      }
     },
     // 点击左侧icon
     handleIconClass (idx) {

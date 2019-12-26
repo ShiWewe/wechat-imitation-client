@@ -16,21 +16,17 @@
   content: "\e79f";
 }
 
-.icon-shoucang:before {
-  content: "\e6ae";
+.icon-tupian:before {
+  font-size: 20px;
+  position: relative;
+  top: -4px;
+  content: "\e64a";
 }
 
 .icon-biaoqing:before {
   content: "\e603";
 }
 
-.icon-yonghu:before {
-  content: "\e607";
-}
-
 .icon-wenjian:before {
-  font-size: 20px;
-  position: relative;
-  top: -4px;
   content: "\e721";
 }
