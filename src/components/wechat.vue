@@ -35,9 +35,12 @@
             </div>
             <div class="user-msg">
               <div class="wap">
-                <div class="main" v-if="item.type == 'txt'"> {{ item.content }}</div>
-                <div class="main" v-if="item.type == 'img'">
+                <div :title="item.content" class="main" v-if="item.type == 'txt'"> {{ item.content }}</div>
+                <div class="main" v-else-if="item.type == 'img'">
                   <img :class="'diy-img-' + idx" :src="item.content" @click.stop="handleClickImg(item)">
+                </div>
+                <div title="文件" class="main zip" v-else>
+                  <img src="../assets/zip.png" @click.stop="handleClickZip(item)">
                 </div>
                 <div class="arrow"></div>
               </div>
@@ -51,7 +54,8 @@
           <emjoy v-if="isShowEmjoy" class="icon-emjoy" @emojiData="getEmojiData"></emjoy>
           <i title="表情" class="iconfont icon-biaoqing" @click.stop="handleEmjoy"></i>
           <i title="图片" class="iconfont icon-tupian" @click.stop="handleUpload"></i>
-          <input class="file-upload" type="file" accept="image/*" @change="handleFileChange" v-show="false">
+          <!-- image/* -->
+          <input class="file-upload" type="file" accept="" @change="handleFileChange" v-show="false">
         </div>
         <el-input ref="elInputRef" style="margin-bottom:10px;resize:none;" type="textarea" placeholder="请输入内容" v-model="msgVal" @keydown.native.enter="handleSend" @focus="handleFocus" resize="none"></el-input>
         <div class="send-btn">
@@ -64,7 +68,7 @@
 </template>
 
 <script>
-import { deepClone, genId } from '@/libs/tools'
+import { deepClone, genId, isImage } from '@/libs/tools'
 import Vue from 'vue'
 import emjoy from '@/components/emjoy'
 import setting from '@/components/setting'
@@ -165,6 +169,8 @@ export default {
         content = '[图片]'
       } else if (arr[idx] && arr[idx]['type'] == 'txt') {
         content = arr[idx]['content']
+      } else {
+        content = '[文件]'
       }
       if (this.userList.length) {
         let i = this.userList.findIndex(item => item.userId == data.userId)
@@ -230,16 +236,34 @@ export default {
     },
     handleFileChange (file) {
       let reads = new FileReader();
-      reads.readAsDataURL(file.target.files[0]);
-      reads.onload = () => {
-        this.$socket.emit('joinGroup', {
-          userId: this.userInfo[0]['userId'],
-          avatar: this.userInfo[0]['avatar'],
-          type: 'img',
-          content: reads.result
-        });
-        let file = document.querySelector('.file-upload')
-        file.value = null
+      let type = file.target.files[0]['type']
+      if (/image/.test(type)) {
+        reads.readAsDataURL(file.target.files[0]);
+        reads.onload = () => {
+          this.$socket.emit('joinGroup', {
+            userId: this.userInfo[0]['userId'],
+            avatar: this.userInfo[0]['avatar'],
+            type: 'img',
+            content: reads.result
+          });
+          let file = document.querySelector('.file-upload')
+          file.value = null
+        }
+      } else {
+        reads.readAsArrayBuffer(file.target.files[0], 'utf-8');
+        let name = file.target.files[0]['name']
+        let fileId = Date.now()
+        reads.onload = () => {
+          this.$socket.emit('joinGroup', {
+            userId: this.userInfo[0]['userId'],
+            avatar: this.userInfo[0]['avatar'],
+            type: `file,${fileId}_${name}`,
+            fileId,
+            content: reads.result
+          });
+          let file = document.querySelector('.file-upload')
+          file.value = null
+        }
       }
     },
     // 点击左侧icon
@@ -259,6 +283,17 @@ export default {
     },
     getEmojiData (e) {
       this.msgVal += e
+    },
+    // 点击文件
+    handleClickZip (item) {
+      let str = '/download?name='
+      let idx = item.type.indexOf(',') + 1
+      let name = item.type.slice(idx)
+      let protocol = location.protocol + '//'
+      let host = location.hostname + ':3000'
+      let href = protocol + host + str + name
+      window.open(href)
+      // http://192.168.1.140:3000/download?name=1578036445748_quotatemplate.xlsx
     },
     // 图片缩放
     handleClickImg (item) {

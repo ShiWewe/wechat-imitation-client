@@ -30,3 +30,10 @@ export function deepClone (params) {
 	}
 	return result
 }
+
+// 判断文件是否为图片类型
+export const isImage = (ext) => {
+	if (ext === 'png' || ext === 'jpg' || ext === 'jpeg' || ext === 'gif' || ext === 'bmp') {
+		return true
+	}
+}
