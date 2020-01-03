@@ -106,6 +106,12 @@ export default {
       },
       {
         imgUrl: require('@/assets/images/avatar3.png')
+      },
+      {
+        imgUrl: require('@/assets/images/avatar4.png')
+      },
+      {
+        imgUrl: require('@/assets/images/avatar5.png')
       }],
       // 表情包
       isShowEmjoy: false,
@@ -129,7 +135,7 @@ export default {
 
     this.formatterBoxHeight()
 
-    let idx = Math.floor(Math.random() * 2 + 1)
+    let idx = Math.floor(Math.random() * 4 + 1)
     this.userInfo = [{
       userId: this.userId,
       avatar: this.avatarList[idx]['imgUrl']
