@@ -5,6 +5,9 @@
         <div class="setting-account">
           <el-avatar :size="100" shape="square" :src="userInfo && userInfo[0] && userInfo[0]['avatar']"></el-avatar>
           <div class="setting-user-id">
+            <span>用户昵称：{{userInfo && userInfo[0] && userInfo[0]['username']}}</span>
+          </div>
+          <div class="setting-user-id">
             <span>用户id：{{userInfo && userInfo[0] && userInfo[0]['userId']}}</span>
           </div>
           <div class="setting-login-out">

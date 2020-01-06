@@ -26,9 +26,6 @@
 }
 
 .icon-tupian:before {
-  font-size: 20px;
-  position: relative;
-  top: -4px;
   content: "\e64a";
 }
 
@@ -37,6 +34,9 @@
 }
 
 .icon-wenjian:before {
+  font-size: 20px;
+  position: relative;
+  top: -4px;
   content: "\e721";
 }
 

@@ -3,13 +3,11 @@ import Router from 'vue-router'
 
 Vue.use(Router)
 
-export default new Router({
+const router = new Router({
   routes: [
     {
       path: '/',
-      name: 'code',
-      redirect: '/wechat',
-      component: () => import('@/components/code.vue')
+      redirect: '/login'
     },
     {
       path: '/login',
@@ -23,3 +21,16 @@ export default new Router({
     }
   ]
 })
+
+router.beforeEach((to, from, next) => {
+  let val = localStorage.getExpire('userInfo')
+  if (val) {
+    next()
+  } else if (!val && to.path !== '/login') {
+    next('/login')
+  } else if (!val && to.path == '/login') {
+    next()
+  }
+})
+
+export default router

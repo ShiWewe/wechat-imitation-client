@@ -15,7 +15,7 @@
       <div class="box-user-item" v-for="(item, idx) in userList" :key="idx" :class="item.userId == userId ? 'actived': ''">
         <img :src="item.avatar">
         <div>
-          <span :title="item.userId">{{item.userId}}</span>
+          <span :title="item.username">{{item.username}}</span>
           <span :title="item.latestNew">{{item.latestNew}}</span>
         </div>
       </div>
@@ -25,8 +25,8 @@
         <div v-for="(item, idx) in wechatList" :key="idx" :class="item.userId == userId ? 'mine': 'other'">
           <template v-if="item.type && item.type == 'activityinfo'">
             <div class="join-class">
-              <span v-if="item.event == 'join'">{{item.userInfo[0]['userId']}} 加入群聊</span>
-              <span v-else-if="item.event == 'out'">{{item.userInfo[0]['userId']}} 退出群聊</span>
+              <span v-if="item.event == 'join'">{{item.userInfo[0]['username']}} 加入群聊</span>
+              <span v-else-if="item.event == 'out'">{{item.userInfo[0]['username']}} 退出群聊</span>
             </div>
           </template>
           <template v-else>
@@ -53,7 +53,7 @@
         <div class="icon">
           <emjoy v-if="isShowEmjoy" class="icon-emjoy" @emojiData="getEmojiData"></emjoy>
           <i title="表情" class="iconfont icon-biaoqing" @click.stop="handleEmjoy"></i>
-          <i title="图片" class="iconfont icon-tupian" @click.stop="handleUpload"></i>
+          <i title="文件" class="iconfont icon-wenjian" @click.stop="handleUpload"></i>
           <!-- image/* -->
           <input class="file-upload" type="file" accept="" @change="handleFileChange" v-show="false">
         </div>
@@ -68,8 +68,9 @@
 </template>
 
 <script>
-import { deepClone, genId, isImage } from '@/libs/tools'
 import Vue from 'vue'
+import { mapGetters } from 'vuex';
+import { deepClone, genId, isImage } from '@/libs/tools'
 import emjoy from '@/components/emjoy'
 import setting from '@/components/setting'
 
@@ -80,6 +81,7 @@ export default {
   },
   data () {
     return {
+      loading: null,
       // icon的class
       iconClassList: ['weixin'],
       iconActived: 0,
@@ -101,22 +103,6 @@ export default {
       wechatList: [],
       // 所有的用户信息
       userList: [],
-      // 头像图片(随机)
-      avatarList: [{
-        imgUrl: require('@/assets/images/avatar1.png')
-      },
-      {
-        imgUrl: require('@/assets/images/avatar2.png')
-      },
-      {
-        imgUrl: require('@/assets/images/avatar3.png')
-      },
-      {
-        imgUrl: require('@/assets/images/avatar4.png')
-      },
-      {
-        imgUrl: require('@/assets/images/avatar5.png')
-      }],
       // 表情包
       isShowEmjoy: false,
       // 图片预览列表
@@ -136,95 +122,107 @@ export default {
     this.userId = genId()
   },
   mounted () {
+    let user = this.$store.state.user.userInfo
+    console.warn(user)
 
-    this.formatterBoxHeight()
+    if (this.handleCheckUserInfo()) {
 
-    let idx = Math.floor(Math.random() * 4 + 1)
-    this.userInfo = [{
-      userId: this.userId,
-      avatar: this.avatarList[idx]['imgUrl']
-    }]
-    // 客户端加入群聊，发送登陆信息给服务器
-    this.$socket.emit('join', {
-      userId: this.userId,
-      avatar: this.avatarList[idx]['imgUrl']
-    });
-    // 收到服务器返回的用户信息
-    this.sockets.subscribe('broadcastJoin', (data) => {
-      this.userList = data
-      this.wechatList.push({
-        type: 'activityinfo',
-        event: 'join',
-        userInfo: [data[data.length - 1]]
+    } else {
+      this.formatterBoxHeight()
+      // this.handleClickDocument()
+      this.userInfo = [{
+        userId: this.userId,
+        username: user.username,
+        avatar: user.avatar
+      }]
+      // 客户端加入群聊，发送登陆信息给服务器
+      this.$socket.emit('join', {
+        userId: this.userId,
+        username: this.userInfo[0].username,
+        avatar: this.userInfo[0].avatar
       })
-      this.scrollBottom()
-    });
-    // 收到服务器返回的聊天信息
-    this.sockets.subscribe('broadcast', (data) => {
-      this.wechatList.push(data)
-      let arr = deepClone(this.wechatList).reverse()
-      let idx = arr.findIndex(item => item.userId == data.userId)
-      let content;
-      if (arr[idx] && arr[idx]['type'] == 'img') {
-        content = '[图片]'
-      } else if (arr[idx] && arr[idx]['type'] == 'txt') {
-        content = arr[idx]['content']
-      } else {
-        content = '[文件]'
-      }
-      if (this.userList.length) {
-        let i = this.userList.findIndex(item => item.userId == data.userId)
-        if (i > -1) {
-          this.userList[i]['latestNew'] = content
-        }
-      }
-      this.msgVal = ''
-      if (data.type == 'img') {
-        this.scrollImg()
-      } else {
-        this.scrollBottom()
-      }
-    });
-    // 收到服务器返回的该用户已经登陆的消息
-    this.sockets.subscribe('mine-broadcast', (data) => {
-      this.$message.error(`该${data.info.userId}用户已经登陆过了`);
-    });
-    // 收到服务器返回的断开链接，退出群聊
-    this.sockets.subscribe('broadcastOut', (data) => {
-      let idx = this.userList.findIndex(item => item.userId == data[0].userId)
-      if (idx > -1) {
-        let result = this.userList.splice(idx, 1)
+      // 收到服务器返回的用户信息
+      this.sockets.subscribe('broadcastJoin', (data) => {
+        console.dir(data)
+        this.userList = data
         this.wechatList.push({
           type: 'activityinfo',
-          event: 'out',
-          userInfo: result
+          event: 'join',
+          userInfo: [data[data.length - 1]]
         })
         this.scrollBottom()
-      }
-    });
-
+      });
+      // 收到服务器返回的聊天信息
+      this.sockets.subscribe('broadcast', (data) => {
+        this.wechatList.push(data)
+        let arr = deepClone(this.wechatList).reverse()
+        let idx = arr.findIndex(item => item.userId == data.userId)
+        let content;
+        if (arr[idx] && arr[idx]['type'] == 'img') {
+          content = '[图片]'
+        } else if (arr[idx] && arr[idx]['type'] == 'txt') {
+          content = arr[idx]['content']
+        } else {
+          content = '[文件]'
+        }
+        if (this.userList.length) {
+          let i = this.userList.findIndex(item => item.userId == data.userId)
+          if (i > -1) {
+            this.userList[i]['latestNew'] = content
+          }
+        }
+        this.msgVal = ''
+        if (data.type == 'img') {
+          this.scrollImg()
+        } else {
+          this.scrollBottom()
+        }
+      });
+      // 收到服务器返回的该用户已经登陆的消息
+      this.sockets.subscribe('mine-broadcast', (data) => {
+        this.$message.error(`${data.info.username}用户已经登陆过了`);
+        this.$router.replace({ name: "login" })
+      });
+      // 收到服务器返回的断开链接，退出群聊
+      this.sockets.subscribe('broadcastOut', (data) => {
+        let idx = this.userList.findIndex(item => item.userId == data[0].userId)
+        if (idx > -1) {
+          let result = this.userList.splice(idx, 1)
+          this.wechatList.push({
+            type: 'activityinfo',
+            event: 'out',
+            userInfo: result
+          })
+          this.scrollBottom()
+        }
+      });
+    }
   },
   methods: {
     handleSend () {
-      let content = this.msgVal
-      // 去掉首尾空格
-      this.msgVal = this.msgVal.replace(/[\r\n](^\s*)|(\s*$)/g, "")
-      if (this.msgVal) {
-        this.$socket.emit('joinGroup', {
-          userId: this.userInfo[0]['userId'],
-          avatar: this.userInfo[0]['avatar'],
-          type: 'txt',
-          content
-        });
-        this.isShowEmjoy && (this.isShowEmjoy = false)
+      if (this.handleCheckUserInfo()) {
+        return
       } else {
-        this.$message({
-          message: '请输入内容 ！',
-          type: 'warning',
-          duration: 1000
-        });
+        let content = this.msgVal
+        // 去掉首尾空格
+        this.msgVal = this.msgVal.replace(/[\r\n](^\s*)|(\s*$)/g, "")
+        if (this.msgVal) {
+          this.$socket.emit('joinGroup', {
+            userId: this.userInfo[0]['userId'],
+            avatar: this.userInfo[0]['avatar'],
+            type: 'txt',
+            content
+          });
+          this.isShowEmjoy && (this.isShowEmjoy = false)
+        } else {
+          this.$message({
+            message: '请输入内容 ！',
+            type: 'warning',
+            duration: 1000
+          });
+        }
+        this.msgVal = ''
       }
-      this.msgVal = ''
     },
     handleFocus () {
       this.isShowEmjoy && (this.isShowEmjoy = false)
@@ -235,34 +233,38 @@ export default {
       file.click()
     },
     handleFileChange (file) {
-      let reads = new FileReader();
-      let type = file.target.files[0]['type']
-      if (/image/.test(type)) {
-        reads.readAsDataURL(file.target.files[0]);
-        reads.onload = () => {
-          this.$socket.emit('joinGroup', {
-            userId: this.userInfo[0]['userId'],
-            avatar: this.userInfo[0]['avatar'],
-            type: 'img',
-            content: reads.result
-          });
-          let file = document.querySelector('.file-upload')
-          file.value = null
-        }
+      if (this.handleCheckUserInfo()) {
+        return
       } else {
-        reads.readAsArrayBuffer(file.target.files[0], 'utf-8');
-        let name = file.target.files[0]['name']
-        let fileId = Date.now()
-        reads.onload = () => {
-          this.$socket.emit('joinGroup', {
-            userId: this.userInfo[0]['userId'],
-            avatar: this.userInfo[0]['avatar'],
-            type: `file,${fileId}_${name}`,
-            fileId,
-            content: reads.result
-          });
-          let file = document.querySelector('.file-upload')
-          file.value = null
+        let reads = new FileReader();
+        let type = file.target.files[0]['type']
+        if (/image/.test(type)) {
+          reads.readAsDataURL(file.target.files[0]);
+          reads.onload = () => {
+            this.$socket.emit('joinGroup', {
+              userId: this.userInfo[0]['userId'],
+              avatar: this.userInfo[0]['avatar'],
+              type: 'img',
+              content: reads.result
+            });
+            let file = document.querySelector('.file-upload')
+            file.value = null
+          }
+        } else {
+          reads.readAsArrayBuffer(file.target.files[0], 'utf-8');
+          let name = file.target.files[0]['name']
+          let fileId = Date.now()
+          reads.onload = () => {
+            this.$socket.emit('joinGroup', {
+              userId: this.userInfo[0]['userId'],
+              avatar: this.userInfo[0]['avatar'],
+              type: `file,${fileId}_${name}`,
+              fileId,
+              content: reads.result
+            });
+            let file = document.querySelector('.file-upload')
+            file.value = null
+          }
         }
       }
     },
@@ -293,7 +295,6 @@ export default {
       let host = location.hostname + ':3000'
       let href = protocol + host + str + name
       window.open(href)
-      // http://192.168.1.140:3000/download?name=1578036445748_quotatemplate.xlsx
     },
     // 图片缩放
     handleClickImg (item) {
@@ -347,6 +348,7 @@ export default {
         }
       })
     },
+    // 计算盒子高度
     formatterBoxHeight () {
       this.$nextTick(() => {
         let boxContentHeight = this.$refs.boxContentListRef.clientHeight
@@ -357,12 +359,23 @@ export default {
         this.$refs.dividerRef.style.top = this.maxTop + 'px'
       })
     },
+    // 注册页面点击事件
+    handleClickDocument () {
+      document.addEventListener('click', e => {
+        debugger
+        // if (e.target.parentElement.className != 'grid-emojis' || e.target.className != 'grid-emojis') {
+        //   this.isShowEmjoy && (this.isShowEmjoy = false)
+        // }
+      })
+    },
+    // 移动分割线
     handleDividerDown (e) {
       document.addEventListener('mousemove', this.handleDividerMove, false)
       document.addEventListener('mouseup', () => {
         document.removeEventListener('mousemove', this.handleDividerMove)
       }, false)
     },
+    // 计算分割线top值
     handleDividerMove (e) {
       let elem = this.$refs.dividerRef
       let newTop = e.y - this.cha
@@ -383,6 +396,19 @@ export default {
         this.scrollBottom()
       })
     },
+    // 判断是否用户名失效（失效则跳转到登录页）
+    handleCheckUserInfo () {
+      let val = localStorage.getExpire('userInfo')
+      if (!val) {
+        this.$message({
+          message: '用户名失效',
+          type: 'warning',
+          duration: 1000
+        });
+        this.$router.replace({ name: "login" })
+        return true
+      }
+    }
   },
   beforeDestroy () {
     this.sockets.unsubscribe('broadcastJoin');
