@@ -209,6 +209,7 @@ export default {
         if (this.msgVal) {
           this.$socket.emit('joinGroup', {
             userId: this.userInfo[0]['userId'],
+            username: this.userInfo[0]['username'],
             avatar: this.userInfo[0]['avatar'],
             type: 'txt',
             content
@@ -243,6 +244,7 @@ export default {
           reads.onload = () => {
             this.$socket.emit('joinGroup', {
               userId: this.userInfo[0]['userId'],
+              username: this.userInfo[0]['username'],
               avatar: this.userInfo[0]['avatar'],
               type: 'img',
               content: reads.result
@@ -257,6 +259,7 @@ export default {
           reads.onload = () => {
             this.$socket.emit('joinGroup', {
               userId: this.userInfo[0]['userId'],
+              username: this.userInfo[0]['username'],
               avatar: this.userInfo[0]['avatar'],
               type: `file,${fileId}_${name}`,
               fileId,
