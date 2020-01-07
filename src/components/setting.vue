@@ -11,7 +11,7 @@
             <span>用户id：{{userInfo && userInfo[0] && userInfo[0]['userId']}}</span>
           </div>
           <div class="setting-login-out">
-            <span>退出登陆</span>
+            <span @click.stop="loginOut">退出登陆</span>
           </div>
         </div>
       </el-tab-pane>
@@ -23,6 +23,8 @@
 </template>
 
 <script>
+import { mapActions } from 'vuex'
+
 export default {
   props: {
     formData: Object
@@ -36,15 +38,21 @@ export default {
     formData: {
       handler (val) {
         if (val.visible) {
+          // console.dir(this.userInfo)
           this.userInfo = val.data.info
-          console.dir(this.userInfo)
         }
       },
       deep: true
     }
   },
   methods: {
-
+    ...mapActions(['handleLoginOut']),
+    // 退出登陆
+    loginOut () {
+      this.handleLoginOut().then(() => {
+        this.$router.replace({ name: "login" })
+      })
+    }
   }
 }
 </script>
@@ -81,6 +89,7 @@ export default {
         padding: 3px 30px;
         border: 1px solid #e7e7e7;
         background: #fff;
+        cursor: pointer;
       }
     }
   }

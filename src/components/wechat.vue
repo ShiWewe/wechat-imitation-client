@@ -51,10 +51,12 @@
       <div class="divider" ref="dividerRef" @mousedown="handleDividerDown"></div>
       <div class="box-right" ref="boxRightRef">
         <div class="icon">
+          <!-- 原表情包 -->
           <emjoy v-if="isShowEmjoy" class="icon-emjoy" @emojiData="getEmojiData"></emjoy>
+          <!-- qq表情包 -->
+          <!-- <qq-emjoy v-if="isShowEmjoy" class="icon-qq-emjoy" @handleSelectImg="handleSelectImg"></qq-emjoy> -->
           <i title="表情" class="iconfont icon-biaoqing" @click.stop="handleEmjoy"></i>
           <i title="文件" class="iconfont icon-wenjian" @click.stop="handleUpload"></i>
-          <!-- image/* -->
           <input class="file-upload" type="file" accept="" @change="handleFileChange" v-show="false">
         </div>
         <el-input ref="elInputRef" style="margin-bottom:10px;resize:none;" type="textarea" placeholder="请输入内容" v-model="msgVal" @keydown.native.enter="handleSend" @focus="handleFocus" resize="none"></el-input>
@@ -72,11 +74,13 @@ import Vue from 'vue'
 import { mapGetters } from 'vuex';
 import { deepClone, genId, isImage } from '@/libs/tools'
 import emjoy from '@/components/emjoy'
+import qqEmjoy from '@/components/qq-emjoy'
 import setting from '@/components/setting'
 
 export default {
   components: {
     emjoy,
+    qqEmjoy,
     setting
   },
   data () {
@@ -123,13 +127,13 @@ export default {
   },
   mounted () {
     let user = this.$store.state.user.userInfo
-    console.warn(user)
+    // console.warn(user)
 
     if (this.handleCheckUserInfo()) {
-
+      return
     } else {
       this.formatterBoxHeight()
-      // this.handleClickDocument()
+      this.handleClickDocument()
       this.userInfo = [{
         userId: this.userId,
         username: user.username,
@@ -143,7 +147,6 @@ export default {
       })
       // 收到服务器返回的用户信息
       this.sockets.subscribe('broadcastJoin', (data) => {
-        console.dir(data)
         this.userList = data
         this.wechatList.push({
           type: 'activityinfo',
@@ -289,6 +292,9 @@ export default {
     getEmojiData (e) {
       this.msgVal += e
     },
+    handleSelectImg (e) {
+      this.msgVal += `[${e.faceName}]`
+    },
     // 点击文件
     handleClickZip (item) {
       let str = '/download?name='
@@ -364,12 +370,15 @@ export default {
     },
     // 注册页面点击事件
     handleClickDocument () {
-      document.addEventListener('click', e => {
-        debugger
-        // if (e.target.parentElement.className != 'grid-emojis' || e.target.className != 'grid-emojis') {
-        //   this.isShowEmjoy && (this.isShowEmjoy = false)
-        // }
-      })
+      document.addEventListener('click', this.handleClickDoc, false)
+    },
+    // 页面点击事件
+    handleClickDoc (e) {
+      if (e.target.className == 'grid-emojis' || e.target.className == 'emoji') {
+        return
+      } else {
+        this.isShowEmjoy && (this.isShowEmjoy = false)
+      }
     },
     // 移动分割线
     handleDividerDown (e) {
@@ -435,7 +444,6 @@ export default {
   position: relative;
   width: 60px;
   background: #27282c;
-  // border: 1px solid red;
   .setting-avatar {
     padding-top: 10px;
     img {
@@ -548,6 +556,10 @@ export default {
       left: 15px;
       bottom: 40px;
     }
+    .icon-qq-emjoy {
+      position: absolute;
+      top: -93px;
+    }
   }
   /deep/.el-textarea {
     flex: 1;
@@ -607,7 +619,9 @@ export default {
     vertical-align: bottom;
   }
 }
-
+.user-msg {
+  padding-top: 10px;
+}
 .box-left > div.mine {
   display: flex;
   flex-direction: row-reverse;

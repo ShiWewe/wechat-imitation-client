@@ -21,7 +21,9 @@ export default {
       })
     },
     // 退出登录
-    logOut ({ commit }) {
+    handleLoginOut ({ commit }) {
+      commit('clearUserInfo')
+      return Promise.resolve()
     }
   },
   mutations: {
@@ -30,6 +32,9 @@ export default {
       // localStorage.setExpire('userInfo', data, 3 * 1000)  // 3s
       state.userInfo.username = data.username
       state.userInfo.avatar = data.avatar
+    },
+    clearUserInfo () {
+      localStorage.removeItem('userInfo')
     }
   }
 }
