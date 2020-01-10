@@ -59,11 +59,9 @@
           <i title="文件" class="iconfont icon-wenjian" @click.stop="handleUpload"></i>
           <input class="file-upload" type="file" accept="" @change="handleFileChange" v-show="false">
         </div>
-
         <div ref="msgContentRef" class="msg-content" contenteditable="true" v-html="msgVal"></div>
 
         <!-- <el-input ref="elInputRef" style="margin-bottom:10px;resize:none;" type="textarea" placeholder="请输入内容" v-model="msgVal" @keydown.native.enter="handleSend" @focus="handleFocus" resize="none"></el-input> -->
-
         <div class="send-btn">
           <el-button size="small" plain @click.stop="handleSend">发送</el-button>
         </div>
@@ -299,7 +297,7 @@ export default {
       // this.msgVal += e
     },
     handleSelectImg (e) {
-      let img = `<img src="${e.facePath}" alt="${e.faceName}" />`
+      let img = `<img title="${e.faceName}" src="${e.facePath}" alt="${e.faceName}" />`
       this.$refs.msgContentRef.innerHTML += img
     },
     // 点击文件
@@ -547,6 +545,7 @@ export default {
   .box-user-item {
     display: flex;
     padding: 10px;
+    height: 50px;
     img {
       width: 50px;
       height: 50px;
