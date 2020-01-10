@@ -16,7 +16,7 @@
         <img :src="item.avatar">
         <div>
           <span :title="item.username">{{item.username}}</span>
-          <span :title="item.latestNew">{{item.latestNew}}</span>
+          <span v-html="item.latestNew"></span>
         </div>
       </div>
     </div>
@@ -35,7 +35,7 @@
             </div>
             <div class="user-msg">
               <div class="wap">
-                <div :title="item.content" class="main" v-if="item.type == 'txt'"> {{ item.content }}</div>
+                <div class="main" v-if="item.type == 'txt'" v-html="item.content"></div>
                 <div class="main" v-else-if="item.type == 'img'">
                   <img :class="'diy-img-' + idx" :src="item.content" @click.stop="handleClickImg(item)">
                 </div>
@@ -52,14 +52,18 @@
       <div class="box-right" ref="boxRightRef">
         <div class="icon">
           <!-- 原表情包 -->
-          <emjoy v-if="isShowEmjoy" class="icon-emjoy" @emojiData="getEmojiData"></emjoy>
+          <!-- <emjoy v-if="isShowEmjoy" class="icon-emjoy" @emojiData="getEmojiData"></emjoy> -->
           <!-- qq表情包 -->
-          <!-- <qq-emjoy v-if="isShowEmjoy" class="icon-qq-emjoy" @handleSelectImg="handleSelectImg"></qq-emjoy> -->
+          <qq-emjoy v-if="isShowEmjoy" class="icon-qq-emjoy" @handleSelectImg="handleSelectImg"></qq-emjoy>
           <i title="表情" class="iconfont icon-biaoqing" @click.stop="handleEmjoy"></i>
           <i title="文件" class="iconfont icon-wenjian" @click.stop="handleUpload"></i>
           <input class="file-upload" type="file" accept="" @change="handleFileChange" v-show="false">
         </div>
-        <el-input ref="elInputRef" style="margin-bottom:10px;resize:none;" type="textarea" placeholder="请输入内容" v-model="msgVal" @keydown.native.enter="handleSend" @focus="handleFocus" resize="none"></el-input>
+
+        <div ref="msgContentRef" class="msg-content" contenteditable="true" v-html="msgVal"></div>
+
+        <!-- <el-input ref="elInputRef" style="margin-bottom:10px;resize:none;" type="textarea" placeholder="请输入内容" v-model="msgVal" @keydown.native.enter="handleSend" @focus="handleFocus" resize="none"></el-input> -->
+
         <div class="send-btn">
           <el-button size="small" plain @click.stop="handleSend">发送</el-button>
         </div>
@@ -133,6 +137,7 @@ export default {
       return
     } else {
       this.formatterBoxHeight()
+      this.handleDocRecordCursor()
       this.handleClickDocument()
       this.userInfo = [{
         userId: this.userId,
@@ -206,10 +211,9 @@ export default {
       if (this.handleCheckUserInfo()) {
         return
       } else {
-        let content = this.msgVal
-        // 去掉首尾空格
-        this.msgVal = this.msgVal.replace(/[\r\n](^\s*)|(\s*$)/g, "")
-        if (this.msgVal) {
+        // let content = this.msgVal.replace(/[\r\n](^\s*)|(\s*$)/g, "") // 旧版（textarea）
+        let content = this.$refs.msgContentRef.innerHTML.split('<div><br></div>').join('')
+        if (content) {
           this.$socket.emit('joinGroup', {
             userId: this.userInfo[0]['userId'],
             username: this.userInfo[0]['username'],
@@ -225,7 +229,9 @@ export default {
             duration: 1000
           });
         }
-        this.msgVal = ''
+        // 清空
+        // this.msgVal = ''
+        this.$refs.msgContentRef.innerHTML = ''
       }
     },
     handleFocus () {
@@ -290,10 +296,11 @@ export default {
       this.isShowEmjoy = !this.isShowEmjoy
     },
     getEmojiData (e) {
-      this.msgVal += e
+      // this.msgVal += e
     },
     handleSelectImg (e) {
-      this.msgVal += `[${e.faceName}]`
+      let img = `<img src="${e.facePath}" alt="${e.faceName}" />`
+      this.$refs.msgContentRef.innerHTML += img
     },
     // 点击文件
     handleClickZip (item) {
@@ -366,7 +373,44 @@ export default {
         this.$refs.boxLeftRef.style.height = h + 'px'
         this.maxTop = h
         this.$refs.dividerRef.style.top = this.maxTop + 'px'
+        let h2 = this.$refs.boxRightRef.offsetHeight
+        // 减去padding上下各10
+        this.$refs.boxRightRef.style.height = h2 - 1 - 20 + 'px'
       })
+    },
+    // 注册页面光标事件和div键盘事件
+    handleDocRecordCursor () {
+      document.addEventListener('selectionchange', this.handleRecordCursor, false)
+      let elem = this.$refs.msgContentRef
+      elem && elem.addEventListener('keyup', this.handleDIVKeyEvent, false)
+    },
+    // 记录页面光标的位置
+    handleRecordCursor (self) {
+      let sel = getSelection();
+      if (!sel) {
+        return;
+      }
+      let node = sel.anchorNode;
+      let isIn = false;
+      // 判断光标是否在div中
+      while (node && node.nodeType != node.DOCUMENT_NODE) {
+        let cls = node.classList;
+        if (cls && cls.contains("msg-content")) {
+          isIn = true;
+          break;
+        }
+        node = node.parentNode
+      }
+      if (!isIn) return;
+      console.log("getCursor");
+      self.select = sel;
+      self.lastRange = sel.getRangeAt(0);
+    },
+    // div键盘回车事件
+    handleDIVKeyEvent (e) {
+      if (e.keyCode == 13) {
+        this.handleSend()
+      }
     },
     // 注册页面点击事件
     handleClickDocument () {
@@ -427,6 +471,9 @@ export default {
     this.sockets.unsubscribe('broadcast');
     this.sockets.unsubscribe('mine-broadcast');
     this.sockets.unsubscribe('broadcastOut');
+    document.removeEventListener('click', this.handleClickDoc)
+    let elem = this.$refs.msgContentRef
+    elem && elem.removeEventListener('keyup', this.handleDIVKeyEvent)
   }
 }
 </script>	
@@ -536,6 +583,17 @@ export default {
   display: flex;
   flex-direction: column;
   border-left: 1px solid #efefef;
+}
+.msg-content {
+  padding: 10px;
+  margin-bottom: 15px;
+  width: 870px;
+  height: 100%;
+  min-height: 120px;
+  border: 1px solid #409eff;
+  border-radius: 5px;
+  outline: none;
+  overflow-y: auto;
 }
 .divider {
   position: absolute;
