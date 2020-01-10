@@ -73,11 +73,17 @@
 
 <script>
 import Vue from 'vue'
+import VueSocketio from 'vue-socket.io';
 import { mapGetters } from 'vuex';
 import { deepClone, genId, isImage } from '@/libs/tools'
 import emjoy from '@/components/emjoy'
 import qqEmjoy from '@/components/qq-emjoy'
 import setting from '@/components/setting'
+
+Vue.use(new VueSocketio({
+  debug: false,
+  connection: 'http://192.168.1.144:3000'
+}));
 
 export default {
   components: {
@@ -370,10 +376,9 @@ export default {
         let h = boxContentHeight - boxRightHeight - 1
         this.$refs.boxLeftRef.style.height = h + 'px'
         this.maxTop = h
-        this.$refs.dividerRef.style.top = this.maxTop + 'px'
+        this.$refs.dividerRef.style.top = this.maxTop - 1 + 'px'
         let h2 = this.$refs.boxRightRef.offsetHeight
-        // 减去padding上下各10
-        this.$refs.boxRightRef.style.height = h2 - 1 - 20 + 'px'
+        this.$refs.boxRightRef.style.height = h2 - 18 + 'px'
       })
     },
     // 注册页面光标事件和div键盘事件
@@ -438,15 +443,14 @@ export default {
         elem.style.top = newTop + 'px'
       } else if (newTop >= this.maxTop) {
         newTop = this.maxTop
-        elem.style.top = newTop + 'px'
+        elem.style.top = newTop - 1 + 'px'
       } else {
-        elem.style.top = newTop + 'px'
+        elem.style.top = newTop - 1 + 'px'
       }
       this.$nextTick(() => {
         let boxContentHeight = this.$refs.boxContentListRef.clientHeight + this.cha
         this.$refs.boxLeftRef.style.height = newTop + 'px'
-        // 减去padding上下各10，分割线（否则点不到线）
-        this.$refs.boxRightRef.style.height = boxContentHeight - this.cha - newTop - 1 - 20 + 'px'
+        this.$refs.boxRightRef.style.height = boxContentHeight - this.cha - newTop - 18 + 'px'
         this.scrollBottom()
       })
     },
@@ -482,10 +486,10 @@ export default {
   width: 1200px;
   height: 800px;
   margin: 30px auto 0;
-  border: 1px solid #efefef;
   border-radius: 5px;
 }
 .wechat-container > .box-setting-list {
+  display: inline-block;
   position: relative;
   width: 60px;
   background: #27282c;
@@ -578,18 +582,18 @@ export default {
 }
 .wechat-container > div.box-content-list {
   position: relative;
+  width: 890px;
   flex: 1;
   display: flex;
   flex-direction: column;
-  border-left: 1px solid #efefef;
 }
 .msg-content {
   padding: 10px;
   margin-bottom: 15px;
-  width: 870px;
+  width: calc(~"100% - 20px");
   height: 100%;
   min-height: 120px;
-  border: 1px solid #409eff;
+  border: 1px solid rgba(64, 158, 255, 0.7);
   border-radius: 5px;
   outline: none;
   overflow-y: auto;
@@ -605,7 +609,7 @@ export default {
   padding: 10px;
   display: flex;
   flex-direction: column;
-  border-top: 1px solid #efefef;
+  background: #fff;
   .icon {
     position: relative;
     .icon-emjoy {

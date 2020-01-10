@@ -59,7 +59,7 @@ export default {
     // 退出登陆
     loginOut () {
       this.handleLoginOut().then(() => {
-        this.$router.replace({ name: "login" })
+        // this.$router.replace({ name: "login" })
       })
     }
   }
