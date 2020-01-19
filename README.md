@@ -27,3 +27,6 @@ npm run build
 -   Element UI
 -   vue-socket.io
 -   v-emoji-picker（旧版）
+
+### preview
+http://47.103.198.182:9201
