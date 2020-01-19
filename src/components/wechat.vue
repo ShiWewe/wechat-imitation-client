@@ -82,7 +82,7 @@ import setting from '@/components/setting'
 
 Vue.use(new VueSocketio({
   debug: false,
-  connection: 'http://192.168.1.144:3000'
+  connection: 'http://47.103.198.182:3000'
 }));
 
 export default {
